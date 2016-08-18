@@ -1,0 +1,129 @@
+#!/bin/bash
+
+# TODO: Make this script work with Two-Factor Authentication (2FA).
+# TODO: Better validation for the IPv4 / IPv6 addresses.
+
+# Configuration ################################################################
+
+# These are the values you need to set. You generally do not need to change the
+# script below the configuration.
+
+# Your username at INWX
+USERNAME=""
+
+# Your password at INWX
+PASSWORD=""
+
+# The ID of the A record
+V4_RECORD_ID=""
+
+# The ID of the AAAA record
+V6_RECORD_ID=""
+
+# Should the script write a logfile? (true | false)
+SILENT=false
+################################################################################
+
+API_ENDPOINT="https://api.domrobot.com/xmlrpc/"
+
+V4_POOL=(
+    "https://ip4.nnev.de/"
+    "http://v4.ident.me/"
+    "https://ipv4.icanhazip.com"
+    "https://v4.ifconfig.co/"
+    "https://ipv4.wtfismyip.com/text"
+)
+
+V6_POOL=(
+    "https://ip6.nnev.de/"
+    "http://v6.ident.me/"
+    "https://ipv6.icanhazip.com"
+    "https://v6.ifconfig.co/"
+    "https://ipv6.wtfismyip.com/text"
+)
+
+function v4() {
+    for V4_API in "${V4_POOL[@]}"; do
+        MAYBE_V4_ADDR=$(curl -s "$V4_API")
+        if [[ $MAYBE_V4_ADDR =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "$MAYBE_V4_ADDR"
+            return 0
+        fi
+
+        continue
+    done
+
+    return 1
+}
+
+function v6() {
+    for V6_API in "${V6_POOL[@]}"; do
+        MAYBE_V6_ADDR=$(curl -s "$V6_API")
+        if [[ $MAYBE_V6_ADDR == *":"* ]]; then
+            echo "$MAYBE_V6_ADDR"
+            return 0
+        fi
+        continue
+    done
+    return 1
+}
+
+function log() {
+    $SILENT || echo "$1"
+    $SILENT || echo "$(date --utc) | $1" >> update.log
+}
+
+function update_ip() {
+    DATA=$(sed "s/%USER%/$1/g;s/%PASSWD%/$2/g;s/%DNSID%/$3/g;s/%NEWIP%/$4/g" update.api)
+    curl -s -X POST -d "$DATA" "$API_ENDPOINT" --header "Content-Type:text/xml"
+}
+
+touch old.ipv4 old.ipv6
+OLD_V4=$(cat old.ipv4)
+OLD_V6=$(cat old.ipv6)
+
+# Write "(empty)" if the files are empty for nice output on first run.
+if [ -z "$OLD_V4" ]; then OLD_V4="(empty)"; fi
+if [ -z "$OLD_V6" ]; then OLD_V6="(empty)"; fi
+
+NEW_V4=$(v4)
+if [[ $? == 1 ]]; then
+    log "Could not get a valid IPv4 address from the pool. Is the connection up?"
+    exit 1
+fi
+
+NEW_V6=$(v6)
+if [[ $? == 1 ]]; then
+    log "Could not get a valid IPv6 address from the pool. Is the connection up?"
+    exit 1
+fi
+
+# Update the A record
+if [ ! "$OLD_V4" == "$NEW_V4" ]; then
+    UPDATE_IP_OUTPUT=$(update_ip $USERNAME $PASSWORD $V4_RECORD_ID $NEW_V4)
+
+    if ! grep -q "Command completed successfully" <<< "$UPDATE_IP_OUTPUT"; then
+        log "Something went wrong updating the IPv4 address. Check the configuration and make sure you're not using Two-Factor-Authentication."
+        exit 1
+    fi
+
+    echo "$NEW_V4" > old.ipv4
+    log "Updated IPv4: $OLD_V4 --> $NEW_V4"
+else
+    echo "IPv4: No changes"
+fi
+
+# Update the AAAA record
+if [ ! "$OLD_V6" == "$NEW_V6" ]; then
+    UPDATE_IP_OUTPUT=$(update_ip $USERNAME $PASSWORD $V6_RECORD_ID $NEW_V6)
+
+    if ! grep -q "Command completed successfully" <<< "$UPDATE_IP_OUTPUT"; then
+        log "Something went wrong updating the IPv6 address. Check the configuration and make sure you're not using Two-Factor-Authentication."
+        exit 1
+    fi
+
+    echo "$NEW_V6" > old.ipv6
+    log "Updated IPv6: $OLD_V6 --> $NEW_V6"
+else
+    echo "IPv6: No changes"
+fi

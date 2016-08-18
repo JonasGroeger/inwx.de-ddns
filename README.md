@@ -1,38 +1,63 @@
-INWX DynDNS Script
-=================
+# inwx.de-ddns
 
-This is a small bash script, which works as a DynDNS updater. It works only with domains which are registered at [inwx.de](https://inwx.de). It only updates the ip record, if the ip has changed.
+This script updates your public IPv4 / IPv6 address at [inwx.de](https://inwx.de/) using their API.
+It is intended to be run on a Synology NAS but you can run it on any other device.
 
-##Requirements##
+## Features
 
-This script does not require any additional tools. All tools should be available on a regular linux system:
+* Only updates your IP if it changed
+* Asks a pool of public IP address APIs
+* Good error handling
+* Timestamped logs
+* Silent mode
 
-- curl
-- sed
+## Requirements
 
+* bash
+* curl
+* sed
+* grep
 
-##Installation##
+## Installation
 
-- 1. Create a new directory in your home folder. E.g. dyndns.
+```
+cd /root/
+git clone git@github.com:JonasGroeger/inwx.de-ddns.git
+cd inwx.de-ddns
+```
 
-```mkdir ~/dyndns```
+## Configuration
 
-```cd ~/dyndns```
+Enter your username, password and both your record IDs in there. You can get the
+record ids like this:
 
-- 2. Clone the files from github
+* Go to [https://www.inwx.de/domainlist](https://www.inwx.de/domainlist)
+* Click the gear icon on the right and select "DNS records".
+* Click `Add DNS entry`, create two records and click `Save`:
 
+```
+nas.domain.com A    127.0.0.1 3600
+nas.domain.com AAAA ::1       3600
+```
 
-```git clone git@github.com:gehaxelt/Bash-INWX-DynDNS.git .```
+* Find the IDs in the source code of the website. You can also use the element picker of Chrome / Firefox / etc. Its usually something like `record_div_XXXXXXXX". Take only the XXXXXXXX part.
 
+Then, enter the IDs as well as your credentials in the `dnsupdate` script:
 
-- 3. Edit the dnsupdate.sh and fill in your login credentials.
+```
+cd /root/inwx.de-ddns/
+vim dnsupdate
+```
 
-```nano dnsupdate.sh```
+In the DSM you can create a scheduled task that runs this script every X minutes:
 
-- 4. Get the wished dns entry id from the inwx website and set it in the script.
+* Scheduled Tasks (calendar icon)
+* Create -> Planned Task -> User defined task
+* Name it somehow and make sure the user is `root`. Make sure its `activated`.
+* Run it as often as you want and in the `Execute command` area enter the following:
 
-- 5. Edit your crontab. For a 5-minutes update use: ```*/5 * * * * cd /home/$USER/dyndns && bash dnsupdate.sh```
+```
+cd /root/inwx.de-ddns/ && bash dnsupdate
+```
 
-```crontab -e```
-
-
+There you go. If you have questions, please create an issue.
