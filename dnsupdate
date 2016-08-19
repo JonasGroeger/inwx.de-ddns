@@ -1,20 +1,11 @@
 #!/bin/bash
 
-# Your username at INWX
-USERNAME=""
-
-# Your password at INWX
-PASSWORD=""
-
-# The ID of the A record
-V4_RECORD_ID=""
-
-# The ID of the AAAA record
-V6_RECORD_ID=""
-
-# Should the script write a logfile? (true | false)
-SILENT=false
-
+# Configuration ################################################################
+USERNAME=""      # Your username at INWX
+PASSWORD=""      # Your password at INWX
+V4_RECORD_ID=""  # The ID of the A record
+V6_RECORD_ID=""  # The ID of the AAAA record
+SILENT=false     # Should the script write a logfile? (true | false)
 ################################################################################
 
 API_ENDPOINT="https://api.domrobot.com/xmlrpc/"
