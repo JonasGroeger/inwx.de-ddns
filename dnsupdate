@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# TODO: Make this script work with Two-Factor Authentication (2FA).
-# TODO: Better validation for the IPv4 / IPv6 addresses.
-
 # Configuration ################################################################
 
 # Your username at INWX
