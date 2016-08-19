@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Configuration ################################################################
-
 # Your username at INWX
 USERNAME=""
 
@@ -16,6 +14,7 @@ V6_RECORD_ID=""
 
 # Should the script write a logfile? (true | false)
 SILENT=false
+
 ################################################################################
 
 API_ENDPOINT="https://api.domrobot.com/xmlrpc/"
