@@ -3,6 +3,8 @@
 This script updates your public IPv4 / IPv6 address at [inwx.de](https://inwx.de/) using their API.
 It is intended to be run on a Synology NAS but you can run it on any other device.
 
+*Written with inspiration from [gehaxelt/Bash-INWX-DynDNS](https://github.com/gehaxelt/Bash-INWX-DynDNS)*
+
 ## Features
 
 * Only updates your IP if it changed
