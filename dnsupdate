@@ -5,9 +5,6 @@
 
 # Configuration ################################################################
 
-# These are the values you need to set. You generally do not need to change the
-# script below the configuration.
-
 # Your username at INWX
 USERNAME=""
 
@@ -33,13 +30,63 @@ V4_POOL=(
     "https://v4.ifconfig.co/"
     "https://ipv4.wtfismyip.com/text"
 )
-
 V6_POOL=(
     "https://ip6.nnev.de/"
     "http://v6.ident.me/"
     "https://ipv6.icanhazip.com"
     "https://v6.ifconfig.co/"
     "https://ipv6.wtfismyip.com/text"
+)
+UPDATE_RECORD=$(cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<methodCall>
+   <methodName>nameserver.updateRecord</methodName>
+   <params>
+      <param>
+         <value>
+            <struct>
+               <member>
+                  <name>user</name>
+                  <value>
+                     <string>%USER%</string>
+                  </value>
+               </member>
+               <member>
+                  <name>lang</name>
+                  <value>
+                     <string>en</string>
+                  </value>
+               </member>
+               <member>
+                  <name>pass</name>
+                  <value>
+                     <string>%PASSWD%</string>
+                  </value>
+               </member>
+               <member>
+                  <name>id</name>
+                  <value>
+                     <int>%DNSID%</int>
+                  </value>
+               </member>
+               <member>
+                  <name>content</name>
+                  <value>
+                     <string>%NEWIP%</string>
+                  </value>
+               </member>
+               <member>
+                  <name>ttl</name>
+                  <value>
+                     <int>360</int>
+                  </value>
+               </member>
+            </struct>
+         </value>
+      </param>
+   </params>
+</methodCall>
+EOF
 )
 
 function v4() {
@@ -69,12 +116,11 @@ function v6() {
 }
 
 function log() {
-    $SILENT || echo "$1"
-    $SILENT || echo "$(date --utc) | $1" >> update.log
+    $SILENT || echo "$(date --utc) | $1" | tee update.log
 }
 
 function update_ip() {
-    DATA=$(sed "s/%USER%/$1/g;s/%PASSWD%/$2/g;s/%DNSID%/$3/g;s/%NEWIP%/$4/g" update.api)
+    DATA=$(echo "$UPDATE_RECORD" | sed -e "s/%USER%/$1/g;s/%PASSWD%/$2/g;s/%DNSID%/$3/g;s/%NEWIP%/$4/g")
     curl -s -X POST -d "$DATA" "$API_ENDPOINT" --header "Content-Type:text/xml"
 }
 
@@ -100,7 +146,7 @@ fi
 
 # Update the A record
 if [ ! "$OLD_V4" == "$NEW_V4" ]; then
-    UPDATE_IP_OUTPUT=$(update_ip $USERNAME $PASSWORD $V4_RECORD_ID $NEW_V4)
+    UPDATE_IP_OUTPUT=$(update_ip "$USERNAME" "$PASSWORD" "$V4_RECORD_ID" "$NEW_V4")
 
     if ! grep -q "Command completed successfully" <<< "$UPDATE_IP_OUTPUT"; then
         log "Something went wrong updating the IPv4 address. Check the configuration and make sure you're not using Two-Factor-Authentication."
@@ -115,7 +161,7 @@ fi
 
 # Update the AAAA record
 if [ ! "$OLD_V6" == "$NEW_V6" ]; then
-    UPDATE_IP_OUTPUT=$(update_ip $USERNAME $PASSWORD $V6_RECORD_ID $NEW_V6)
+    UPDATE_IP_OUTPUT=$(update_ip "$USERNAME" "$PASSWORD" "$V6_RECORD_ID" "$NEW_V6")
 
     if ! grep -q "Command completed successfully" <<< "$UPDATE_IP_OUTPUT"; then
         log "Something went wrong updating the IPv6 address. Check the configuration and make sure you're not using Two-Factor-Authentication."

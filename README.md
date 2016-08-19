@@ -10,6 +10,7 @@ It is intended to be run on a Synology NAS but you can run it on any other devic
 * Good error handling
 * Timestamped logs
 * Silent mode
+* `shellcheck` reports no errors or warnings
 
 ## Requirements
 
