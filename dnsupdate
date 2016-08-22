@@ -103,7 +103,7 @@ function v6() {
 }
 
 function log() {
-    $SILENT || echo "$(date --utc) | $1" | tee update.log
+    $SILENT || echo "$(date --utc) | $1" | tee -a update.log
 }
 
 function update_ip() {
