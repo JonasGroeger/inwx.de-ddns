@@ -1,3 +1,5 @@
+**Note: This repository is no longer maintained. Please use [ddns-inwx](https://github.com/JonasGroeger/ddns-inwx) which provides the same functionality but does not require to fiddle with record IDs).**
+
 # inwx.de-ddns
 
 This script updates your public IPv4 / IPv6 address at [inwx.de](https://inwx.de/) using their API.
